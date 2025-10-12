@@ -1,0 +1,27 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 40%);
+  color: #13203d;
+}
+
+.layout__content {
+  flex: 1;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+
+.layout__footer {
+  text-align: center;
+  padding: 1.5rem 0;
+  background: #0b1a2a;
+  color: #e5ecf5;
+  font-size: 0.85rem;
+}
+
+.layout__footer p {
+  margin: 0;
+}

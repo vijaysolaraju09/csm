@@ -1,35 +1,29 @@
-import { useEffect, useState } from "react";
+import { Route, Routes } from "react-router-dom";
+import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
+import ServicesPage from "./pages/ServicesPage";
+import ServiceDetailPage from "./pages/ServiceDetailPage";
+import DashboardPage from "./pages/DashboardPage";
 
-interface HealthResponse {
-  status: string;
-}
-
-function App(): JSX.Element {
-  const [health, setHealth] = useState<string>("Loading...");
-
-  useEffect(() => {
-    async function fetchHealth() {
-      try {
-        const response = await fetch("/api/health/");
-        if (!response.ok) {
-          throw new Error("Request failed");
-        }
-        const data = (await response.json()) as HealthResponse;
-        setHealth(data.status);
-      } catch (error) {
-        setHealth(`Error: ${(error as Error).message}`);
-      }
-    }
-
-    void fetchHealth();
-  }, []);
-
-  return (
-    <main>
-      <h1>CSM Monorepo</h1>
-      <p>API health: {health}</p>
-    </main>
-  );
-}
+const App = (): JSX.Element => (
+  <Routes>
+    <Route path="/" element={<Layout />}>
+      <Route index element={<HomePage />} />
+      <Route path="login" element={<LoginPage />} />
+      <Route path="signup" element={<SignupPage />} />
+      <Route path="services">
+        <Route index element={<ServicesPage />} />
+        <Route path=":id" element={<ServiceDetailPage />} />
+      </Route>
+      <Route element={<ProtectedRoute />}>
+        <Route path="dashboard" element={<DashboardPage />} />
+      </Route>
+      <Route path="*" element={<HomePage />} />
+    </Route>
+  </Routes>
+);
 
 export default App;
