@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+.env.*
+
+# Django
+/staticfiles/
+/media/
+
+# Node
+node_modules/
+dist/
+*.log
+
+# Vite
+client/.vite
+
+# Docker
+*.pid
