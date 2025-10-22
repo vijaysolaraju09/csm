@@ -8,22 +8,26 @@ import ServicesPage from "./pages/ServicesPage";
 import ServiceDetailPage from "./pages/ServiceDetailPage";
 import DashboardPage from "./pages/DashboardPage";
 
-const App = (): JSX.Element => (
-  <Routes>
-    <Route path="/" element={<Layout />}>
-      <Route index element={<HomePage />} />
-      <Route path="login" element={<LoginPage />} />
-      <Route path="signup" element={<SignupPage />} />
-      <Route path="services">
-        <Route index element={<ServicesPage />} />
-        <Route path=":id" element={<ServiceDetailPage />} />
+const App = (): JSX.Element => {
+  console.log("App component rendered for testing purposes");
+
+  return (
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<HomePage />} />
+        <Route path="login" element={<LoginPage />} />
+        <Route path="signup" element={<SignupPage />} />
+        <Route path="services">
+          <Route index element={<ServicesPage />} />
+          <Route path=":id" element={<ServiceDetailPage />} />
+        </Route>
+        <Route element={<ProtectedRoute />}>
+          <Route path="dashboard" element={<DashboardPage />} />
+        </Route>
+        <Route path="*" element={<HomePage />} />
       </Route>
-      <Route element={<ProtectedRoute />}>
-        <Route path="dashboard" element={<DashboardPage />} />
-      </Route>
-      <Route path="*" element={<HomePage />} />
-    </Route>
-  </Routes>
-);
+    </Routes>
+  );
+};
 
 export default App;
