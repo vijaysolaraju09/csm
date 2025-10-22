@@ -1,16 +1,18 @@
 import type {
   AxiosAdapter,
   AxiosInstance,
-  AxiosRequestConfig,
   AxiosResponse,
+  InternalAxiosRequestConfig,
 } from "axios";
-import { AxiosError } from "axios";
+import { AxiosError, AxiosHeaders } from "axios";
 import type { AuthResponse, LoginPayload, SignupPayload, User } from "../types/auth";
 import type { Service } from "../types/service";
 
 interface StoredUser extends User {
   password: string;
 }
+
+type AdapterConfig = InternalAxiosRequestConfig;
 
 const statusTextMap: Record<number, string> = {
   200: "OK",
@@ -95,7 +97,7 @@ const sanitizeUser = (user: StoredUser): User => ({
 });
 
 const buildResponse = <T>(
-  config: AxiosRequestConfig,
+  config: AdapterConfig,
   data: T,
   status = 200,
 ): AxiosResponse<T> => ({
@@ -107,7 +109,7 @@ const buildResponse = <T>(
 });
 
 const buildError = (
-  config: AxiosRequestConfig,
+  config: AdapterConfig,
   status: number,
   message: string,
 ): Promise<never> => {
@@ -115,7 +117,7 @@ const buildError = (
   return Promise.reject(new AxiosError(message, undefined, config, undefined, response));
 };
 
-const parseBody = <T>(config: AxiosRequestConfig): T => {
+const parseBody = <T>(config: AdapterConfig): T => {
   if (!config.data) {
     return {} as T;
   }
@@ -141,7 +143,7 @@ const titleCaseFromEmail = (email: string): string => {
 };
 
 const handleLogin = async (
-  config: AxiosRequestConfig,
+  config: AdapterConfig,
 ): Promise<AxiosResponse<AuthResponse>> => {
   const { email, password } = parseBody<LoginPayload>(config);
 
@@ -178,7 +180,7 @@ const handleLogin = async (
 };
 
 const handleSignup = async (
-  config: AxiosRequestConfig,
+  config: AdapterConfig,
 ): Promise<AxiosResponse<AuthResponse>> => {
   const { name, email, password } = parseBody<SignupPayload>(config);
 
@@ -212,12 +214,49 @@ const handleSignup = async (
   );
 };
 
+const normalizeHeaderValue = (value: unknown): string | undefined => {
+  if (Array.isArray(value)) {
+    return value.length > 0 ? normalizeHeaderValue(value[0]) : undefined;
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  return undefined;
+};
+
+const getAuthorizationHeader = (
+  headers: AdapterConfig["headers"],
+): string | undefined => {
+  if (!headers) {
+    return undefined;
+  }
+
+  if (typeof (headers as AxiosHeaders).toJSON === "function") {
+    const axiosHeaders = headers as AxiosHeaders;
+    const serialized = axiosHeaders.toJSON();
+    return (
+      normalizeHeaderValue(serialized["Authorization"]) ??
+      normalizeHeaderValue(serialized["authorization"])
+    );
+  }
+
+  const headerRecord = headers as Record<string, unknown>;
+  return (
+    normalizeHeaderValue(headerRecord["Authorization"]) ??
+    normalizeHeaderValue(headerRecord["authorization"])
+  );
+};
+
 const handleCurrentUser = async (
-  config: AxiosRequestConfig,
+  config: AdapterConfig,
 ): Promise<AxiosResponse<User>> => {
-  const authHeader = (config.headers?.Authorization ?? config.headers?.authorization) as
-    | string
-    | undefined;
+  const authHeader = getAuthorizationHeader(config.headers);
 
   if (!authHeader || authHeader !== `Bearer ${currentToken}` || !currentUser) {
     return buildError(config, 401, "Authentication required.");
@@ -227,12 +266,12 @@ const handleCurrentUser = async (
 };
 
 const handleServices = async (
-  config: AxiosRequestConfig,
+  config: AdapterConfig,
 ): Promise<AxiosResponse<{ services: Service[] }>> =>
   buildResponse(config, { services }, 200);
 
 const handleServiceDetail = async (
-  config: AxiosRequestConfig,
+  config: AdapterConfig,
 ): Promise<AxiosResponse<Service>> => {
   const serviceId = config.url?.split("/").pop();
   const service = services.find((item) => item.id === serviceId);

@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, AxiosHeaders } from "axios";
 import { attachMockAdapter } from "./mockAdapter";
 
 const apiClient = axios.create({
@@ -13,10 +13,13 @@ apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("authToken");
     if (token) {
-      config.headers = {
-        ...config.headers,
-        Authorization: `Bearer ${token}`,
-      };
+      const headers =
+        config.headers instanceof AxiosHeaders
+          ? config.headers
+          : AxiosHeaders.from(config.headers ?? {});
+
+      headers.set("Authorization", `Bearer ${token}`);
+      config.headers = headers;
     }
     return config;
   },
